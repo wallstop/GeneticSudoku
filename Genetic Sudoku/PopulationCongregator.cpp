@@ -65,6 +65,9 @@ void spawnThreads()
 void run()
 {
 	int generationCounter;
+	std::chrono::high_resolution_clock::time_point time;
+
+	time = std::chrono::high_resolution_clock::now();
 
 	generationCounter = 0;
 	while(true)
@@ -79,16 +82,22 @@ void run()
 		for(int i = 0; i < overLordArray.size(); i++)
 			threadConfigs[i % numThreads].push_back(overLordArray[i]);
 
+		std::sort(overLordArray.begin(), overLordArray.end());
+		std::cout << "Current best fitness: " << overLordArray[0].getFitness() << std::endl;
+		
+		if(generationCounter % 10 == 0)
+			overLordArray[0].printBoard();
+
 		overLordArray.clear();
-		threadMutex.lock();
 		finishedThreads = 0;
-		threadMutex.unlock();
 
 		if(!optimalSolution)
 			condVar.notify_all();
 		else
 			break;
 	}
+	std::chrono::high_resolution_clock::time_point time2 = std::chrono::high_resolution_clock::now();
+	std::cout << "Operation took: " << std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time).count() << std::endl;
 }
 
 void initRandomSeed()

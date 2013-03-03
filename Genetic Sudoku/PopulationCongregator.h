@@ -3,7 +3,7 @@
 #include <thread>
 #include "GeneticPopulation.h"
 
-#define numThreads 8
+#define numThreads 4
 
 //Making this class-based makes it difficult to run threads, there'd have to be another layer of class-based abstraction which is gross and unecessary
 

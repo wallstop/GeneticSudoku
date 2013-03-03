@@ -6,9 +6,9 @@
 #include "SudokuPuzzle.h"
 
 //Make sure populationSize is an even number, threads return exactly half of this
-#define populationSize 50	
-#define numberOfGenerations 20
-#define minimumImprovement 2
+#define populationSize 100	
+#define numberOfGenerations 100
+#define minimumImprovement 25
 #define e 2.71828182845904523536
 
 class GeneticPopulation

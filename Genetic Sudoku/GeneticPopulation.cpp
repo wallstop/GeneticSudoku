@@ -63,6 +63,7 @@ void GeneticPopulation::spawnChildren()
 	int parentConfiguration;
 	bool parentOrder;
 	int numMutations;
+	int swapAnywayChance;
 	//These could be pointers
 	SudokuPuzzle parent1;
 	SudokuPuzzle parent2;
@@ -75,7 +76,7 @@ void GeneticPopulation::spawnChildren()
 	{
 		preMateMutationRate = rand() % 100;
 		postMateMutationRate = rand() % 100;
-		parentConfiguration = rand() % 4;
+		parentConfiguration = rand() % 8;
 		parentOrder = rand() % 2;
 		numMutations = 0;
 
@@ -99,6 +100,22 @@ void GeneticPopulation::spawnChildren()
 			parent1 = genePool[rand() % populationSize];
 			parent2 = genePool[rand() % populationSize];
 			break;
+		case 4:
+			parent1 = genePool[0];
+			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			break;
+		case 5:
+			parent1 = genePool[rand() % populationSize];
+			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			break;
+		case 6:
+			parent1 = genePool[(int) (rand() % (populationSize / 10))];
+			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			break;
+		case 7:
+			parent1 = SudokuPuzzle(genePool[0].getStaticBoard());
+			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			break;
 		}
 
 		//Swap the parents around
@@ -117,16 +134,35 @@ void GeneticPopulation::spawnChildren()
 			mutateSpecimen(std::ref(child), preMateMutationRate);
 	
 		//Optimize, has to be better way
+		//Fit a random number of macroBlocks
+
 		//for(int j = 0; j < sizeOfBoard; j++)
 		{
-			int j = rand() % sizeOfBoard;
-			for(int k = 0; k < sizeOfBoard; k++)
+			int tempMax;
+			int tempMin;
+
+			tempMax = rand() % sizeOfBoard;
+			tempMin = rand() % sizeOfBoard;
+			
+			if(tempMin > tempMax)
 			{
-				for(int l = (k + 1); l < sizeOfBoard; l++)
+				int temp = tempMin;
+				tempMin = tempMax;
+				tempMax = temp;
+			}
+			tempMax++;
+
+			for(int j = tempMin; j < tempMax; j++)
+			{
+				for(int k = 0; k < sizeOfBoard; k++)
 				{
-					tempChild = SudokuPuzzle(j, k, l, child);
-					if (tempChild < child)
-						child = tempChild;
+					for(int l = (k + 1); l < sizeOfBoard; l++)
+					{
+						swapAnywayChance = rand() % 100;
+						tempChild = SudokuPuzzle(j, k, l, child);
+						if ((tempChild < child) || (!swapAnywayChance))
+							child = tempChild;
+					}
 				}
 			}
 		}
@@ -135,9 +171,9 @@ void GeneticPopulation::spawnChildren()
 		switch(postMateMutationRate)
 		{
 		case 0:
-			numMutations++;
+			numMutations += 2 * sizeOfBoard;
 		case 1:
-			numMutations++;
+			numMutations += sizeOfBoard;
 		case 2:
 			numMutations++;
 		case 3:
@@ -168,6 +204,7 @@ void GeneticPopulation::improveGenePool()
 	int numSwaps;
 	int swapsMade;
 	int index;
+	int swapAnyways;
 
 	swapsMade = 0;
 	numSwaps = (int) (rand() % 20) + minimumImprovement;
@@ -183,7 +220,8 @@ void GeneticPopulation::improveGenePool()
 	for(int i = 0; i < numSwaps; i++)
 	{
 		index = rand() % populationSize;
-		if(childPool[index] < genePool[index])
+		swapAnyways = rand() % 100;
+		if((childPool[index] < genePool[index]) || (!swapAnyways))
 		{
 			genePool[index] = childPool[index];
 			swapsMade++;
@@ -198,6 +236,7 @@ void GeneticPopulation::improveGenePool()
 	sortGenePool();
 }
 
+//I'm not sure if this method works properly
 void GeneticPopulation::mutateSpecimen(SudokuPuzzle &config, int mutationAmount)
 {
 	for(int i = 0; i < mutationAmount; i++)
@@ -209,6 +248,8 @@ void GeneticPopulation::mutateSpecimen(SudokuPuzzle &config, int mutationAmount)
 //Returns the best 50% of the genePool
 std::vector<SudokuPuzzle> GeneticPopulation::getPopulationSegment()
 {
+	//Shuffle everything but the best 
+	std::random_shuffle(++genePool.begin(), genePool.end());
 	genePool.resize(populationSize / 2);
 	return genePool;
 }
