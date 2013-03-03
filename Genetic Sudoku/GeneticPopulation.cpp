@@ -22,9 +22,9 @@ GeneticPopulation::GeneticPopulation(char *fileName)
 	genePool[0].printBoard();
 }
 
-GeneticPopulation::GeneticPopulation(std::vector<SudokuPuzzle> initialConfig, std::condition_variable condVar, std::mutex threadMutex)
+GeneticPopulation::GeneticPopulation(std::vector<SudokuPuzzle> initialConfig /*, std::condition_variable &condVar, std::mutex &threadMutex */)
 {
-	barrier = std::unique_lock<std::mutex>(threadMutex);
+	//barrier = std::unique_lock<std::mutex>(threadMutex);
 	genePool.reserve(populationSize);
 	childPool.reserve(populationSize);
 	genePool = initialConfig;
@@ -36,7 +36,7 @@ GeneticPopulation::GeneticPopulation(std::vector<SudokuPuzzle> initialConfig, st
 	spawnAdditionalMembers();
 	resetVariance();
 	advancePopulation();
-	condVar.wait(barrier);
+	//condVar.wait(barrier);
 }
 
 //Fills up the genePool with randomly generated configurations
@@ -48,7 +48,7 @@ void GeneticPopulation::spawnAdditionalMembers()
 
 void GeneticPopulation::advancePopulation()
 {
-	for(int i = 0; i < numberOfGenerations; i++)
+	for(int i = 0; (i < numberOfGenerations) && (!optimalSolution); i++)
 	{
 		spawnChildren();
 		improveGenePool();
@@ -117,8 +117,9 @@ void GeneticPopulation::spawnChildren()
 			mutateSpecimen(std::ref(child), preMateMutationRate);
 	
 		//Optimize, has to be better way
-		for(int j = 0; j < sizeOfBoard; j++)
+		//for(int j = 0; j < sizeOfBoard; j++)
 		{
+			int j = rand() % sizeOfBoard;
 			for(int k = 0; k < sizeOfBoard; k++)
 			{
 				for(int l = (k + 1); l < sizeOfBoard; l++)
@@ -159,7 +160,7 @@ void GeneticPopulation::spawnChildren()
 	}
 
 	assert(childPool.size() == populationSize);
-	//std::sort(childPool.begin(), childPool.end());
+	std::sort(childPool.begin(), childPool.end());
 }
 
 void GeneticPopulation::improveGenePool()
@@ -169,7 +170,7 @@ void GeneticPopulation::improveGenePool()
 	int index;
 
 	swapsMade = 0;
-	numSwaps = (rand() % 20) + minimumImprovement;
+	numSwaps = (int) (rand() % 20) + minimumImprovement;
 
 	//Random chance to compare the best two
 	if(numSwaps % 2 == 0)
@@ -201,8 +202,15 @@ void GeneticPopulation::mutateSpecimen(SudokuPuzzle &config, int mutationAmount)
 {
 	for(int i = 0; i < mutationAmount; i++)
 	{
-		config = SudokuPuzzle(rand() % sizeOfMacroBlock, rand() % sizeOfBoard, rand() % sizeOfBoard, config);
+		config = SudokuPuzzle(rand() % sizeOfBoard, rand() % sizeOfBoard, rand() % sizeOfBoard, config);
 	}
+}
+
+//Returns the best 50% of the genePool
+std::vector<SudokuPuzzle> GeneticPopulation::getPopulationSegment()
+{
+	genePool.resize(populationSize / 2);
+	return genePool;
 }
 
 //Sorting the genePool allows us to find the best and worst members simply be indexing into the genePool
@@ -219,8 +227,8 @@ void GeneticPopulation::resetVariance()
 void GeneticPopulation::incrementVariance()
 {
 	variance = pow(e, variance);
-	variance += 1;
-	variance = pow(e, variance);
+	variance += 30;
+	variance = log(variance);
 }
 
 void GeneticPopulation::printGenePool()

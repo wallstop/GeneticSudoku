@@ -5,9 +5,10 @@
 #include <condition_variable>
 #include "SudokuPuzzle.h"
 
-#define populationSize 100
-#define numberOfGenerations 50
-#define minimumImprovement populationSize * .01
+//Make sure populationSize is an even number, threads return exactly half of this
+#define populationSize 50	
+#define numberOfGenerations 20
+#define minimumImprovement 2
 #define e 2.71828182845904523536
 
 class GeneticPopulation
@@ -33,8 +34,9 @@ private:
 	void advancePopulation();
 public:
 	GeneticPopulation(char *);
-	GeneticPopulation(std::vector<SudokuPuzzle>, std::condition_variable, std::mutex);
+	GeneticPopulation(std::vector<SudokuPuzzle> /*, std::condition_variable &, std::mutex & */);
 
+	std::vector<SudokuPuzzle> getPopulationSegment();
 	bool hasOptimal();
 	void printGenePool();
 };
