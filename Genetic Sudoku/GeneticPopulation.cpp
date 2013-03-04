@@ -102,19 +102,19 @@ void GeneticPopulation::spawnChildren()
 			break;
 		case 4:
 			parent1 = genePool[0];
-			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			parent2 = SudokuPuzzle(staticBoard);
 			break;
 		case 5:
 			parent1 = genePool[rand() % populationSize];
-			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			parent2 = SudokuPuzzle(staticBoard);
 			break;
 		case 6:
 			parent1 = genePool[(int) (rand() % (populationSize / 10))];
-			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			parent2 = SudokuPuzzle(staticBoard);
 			break;
 		case 7:
-			parent1 = SudokuPuzzle(genePool[0].getStaticBoard());
-			parent2 = SudokuPuzzle(genePool[0].getStaticBoard());
+			parent1 = SudokuPuzzle(staticBoard);
+			parent2 = SudokuPuzzle(staticBoard);
 			break;
 		}
 
