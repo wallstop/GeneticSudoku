@@ -59,11 +59,14 @@ void GeneticPopulation::spawnChildren()
 	{
 		preMateMutationRate = rand() % 100;	//Mutation of the genome pre-mating
 		postMateMutationRate = rand() % 100;//Mutation of the genome post-mating
-		parentConfiguration = rand() % 8;	//Determines which parents a child will have
+		parentConfiguration = rand() % 4;	//Determines which parents a child will have
 		parentOrder = rand() % 2;			//Determines their order (A child will primarily be parent1)
 		numMutations = 0;
 
 		assert(genePool.size() == populationSize);
+
+		if(preMateMutationRate < variance)
+			parentConfiguration += 4;
 
 		//Parent config
 		switch(parentConfiguration)
@@ -114,44 +117,30 @@ void GeneticPopulation::spawnChildren()
 
 		child = parent1;
 
-		if(preMateMutationRate < variance)
-			mutateSpecimen(std::ref(child), preMateMutationRate);
+		if(preMateMutationRate < (int) (variance / 2))
+			child.randomize(rand() % (sizeOfBoard * sizeOfBoard));
 	
 		//Optimize, has to be better way
 		//Fit a random number of macroBlocks
 
-		//for(int j = 0; j < sizeOfBoard; j++)
-		{
-			int tempMax;
-			int tempMin;
-
-			tempMax = rand() % sizeOfBoard;
-			tempMin = rand() % sizeOfBoard;
-			
-			if(tempMin > tempMax)
-			{
-				int temp = tempMin;
-				tempMin = tempMax;
-				tempMax = temp;
-			}
-			tempMax++;
-
 			//Runs through a random range of macroBlocks
-			for(int j = tempMin; j < tempMax; j++)
+			for(int j = 0; j < sizeOfBoard; j++)
 			{
 				for(int k = 0; k < sizeOfBoard; k++)	//Tries to swap every pair
 				{
-					for(int l = (k + 1); l < sizeOfBoard; l++)
-					{
-						swapAnywayChance = rand() % 100;			//Random chance to perform the below swap anyway
-						tempChild = SudokuPuzzle(j, k, l, child);
+	
+					swapAnywayChance = rand() % randomPercent;			//Random chance to perform the below swap anyway
+					//if(iterateBackwards)
+					//	tempChild = SudokuPuzzle((startMacroBlock - j) % sizeOfBoard, (startSwap + k) % sizeOfBoard, (startSwap + l) % sizeOfBoard, child);
+					//else
+					tempChild = child;
+					tempChild.replaceCell(j, k, parent2.getCellAt(j, k));
 
-						if ((tempChild < child) || (!swapAnywayChance))	//Compares the two, only updates if the new configuration is better than the current one.
+					if ((tempChild < child) || (!swapAnywayChance))	//Compares the two, only updates if the new configuration is better than the current one.
 							child = tempChild;
-					}
 				}
 			}
-		}
+
 		
 		//Mutates the created child
 		switch(postMateMutationRate)
@@ -174,7 +163,56 @@ void GeneticPopulation::spawnChildren()
 			numMutations++;
 		case 8:
 			numMutations++;
-			mutateSpecimen(std::ref(child), numMutations);
+			child.randomize(numMutations);
+			break;
+		case 9:
+		case 10:
+		case 11:
+			for(int j = 0; j < sizeOfBoard; j++)
+			{
+				for(int k = 0; k < sizeOfBoard; k++)	//Tries to swap every pair
+				{
+					for(int l = (k + 1); l <= sizeOfBoard; l++)
+					{
+						swapAnywayChance = rand() % sizeOfBoard;			//Random chance to perform the below swap anyway
+						tempChild = child;
+						tempChild.replaceCell(j, k, l);
+						if((tempChild < child) || (!swapAnywayChance))	//Compares the two, only updates if the new configuration is better than the current one.
+							child = tempChild;
+					}
+				}
+			}
+			break;
+		case 12:
+			for(int j = 0; j < sizeOfBoard; j++)
+			{
+				for(int k = 0; k < sizeOfBoard; k++)	//Tries to swap every pair
+				{
+					for(int l = (k + 1); l < sizeOfBoard; l++)
+					{
+						swapAnywayChance = rand() % 2;			//Random chance to perform the below swap anyway
+						tempChild = SudokuPuzzle(j, k, l, parent2);
+						if ((tempChild < child) || (!swapAnywayChance))	//Compares the two, only updates if the new configuration is better than the current one.
+							child = tempChild;
+					}
+				}
+			}
+			break;
+		case 13:
+		case 14:
+			for(int j = 0; j < sizeOfBoard; j++)
+			{
+				for(int k = 0; k < sizeOfBoard; k++)	//Tries to swap every pair
+				{
+					for(int l = (k + 1); l < sizeOfBoard; l++)
+					{
+						swapAnywayChance = rand() % 2;			//Random chance to perform the below swap anyway
+						tempChild = SudokuPuzzle(j, k, l, child);
+						if ((tempChild < child) || (!swapAnywayChance))	//Compares the two, only updates if the new configuration is better than the current one.
+							child = tempChild;
+					}
+				}
+			}
 			break;
 		}
 
@@ -196,15 +234,18 @@ void GeneticPopulation::improveGenePool()
 	int swapAnyways;
 
 	swapsMade = 0;
-	numSwaps = (int) (rand() % 20) + minimumImprovement;
+	numSwaps = (int) (rand() % minimumImprovement) + minimumImprovement;
 
 	//Random chance to compare the best two
 	if(numSwaps % 2 == 0)
-		if(childPool[0] < genePool[0])
+	{
+		swapAnyways = rand() % 100;
+		if((childPool[0] < genePool[0]) || (!swapAnyways))
 		{
 			genePool[0] = childPool[0];
 			swapsMade++;
 		}
+	}
 
 	//Compares SudokuPuzzles at arbitrary positions within the two arrays
 	for(int i = 0; i < numSwaps; i++)
@@ -231,13 +272,13 @@ void GeneticPopulation::improveGenePool()
 //	Should randomly swap around cells within a macro block some number of times
 //	This can be highly optimized with a member function, such that evaluateFitness() is only called one time (after all the swaps)
 //		and no new objects are created. @TODO
-void GeneticPopulation::mutateSpecimen(SudokuPuzzle &config, int mutationAmount)
-{
-	for(int i = 0; i < mutationAmount; i++)
-	{
-		config = SudokuPuzzle(rand() % sizeOfBoard, rand() % sizeOfBoard, rand() % sizeOfBoard, config);
-	}
-}
+//void GeneticPopulation::mutateSpecimen(SudokuPuzzle &config, int mutationAmount)
+//{
+//	for(int i = 0; i < mutationAmount; i++)
+//	{
+//		config = SudokuPuzzle(rand() % sizeOfBoard, rand() % sizeOfBoard, rand() % sizeOfBoard, config);
+//	}
+//}
 
 //Returns the best 50% of the genePool
 std::vector<SudokuPuzzle> GeneticPopulation::getPopulationSegment()
@@ -256,15 +297,15 @@ void GeneticPopulation::sortGenePool()
 
 void GeneticPopulation::resetVariance()
 {
-	variance = log(1);
+	variance = 1;
 }
 
 //Should represent a logarithmic curve
 void GeneticPopulation::incrementVariance()
 {
-	variance = pow(e, variance);
-	variance += 30;
-	variance = log(variance);
+	variance = pow(variance, 2);
+	variance += 200;
+	variance = sqrt(variance);
 }
 
 void GeneticPopulation::checkOptimality()

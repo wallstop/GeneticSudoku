@@ -6,10 +6,11 @@
 #include "SudokuPuzzle.h"
 
 //Make sure populationSize is an even number, threads return exactly half of this. These numbers can be tweaked
-#define populationSize 100	
+#define populationSize 130	
 #define numberOfGenerations 100
 //minimumImprovement defines the minimum number of replacements per generation that need to happen, otherwise increase the randomness of pre-mate genome mutation
-#define minimumImprovement 25
+#define minimumImprovement populationSize * .2
+#define randomPercent 20
 
 //Probably could have used Math.e instead
 #define e 2.71828182845904523536
@@ -25,7 +26,7 @@ private:
 	int sizeOfBoard;
 	int sizeOfMacroBlock;						
 
-	void mutateSpecimen(SudokuPuzzle &, int);	//Swaps around some number of cells in some SudokuPuzzle configuration
+	//void mutateSpecimen(SudokuPuzzle &, int);	//Swaps around some number of cells in some SudokuPuzzle configuration
 	void checkOptimality();						//Determines if an optimal solution has been found
 	void sortGenePool();						//Sorts the genePool so that the most-fit members is at index 0, and the least-fit is at the end
 	void spawnAdditionalMembers();				//When a GeneticPopulation is given an initial array(via the constructor), create additional members until populationSize has been reached

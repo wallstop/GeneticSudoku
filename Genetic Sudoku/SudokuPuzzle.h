@@ -24,6 +24,9 @@ public:
 	
 	bool operator<(const SudokuPuzzle&);	//Used for sorting comparisons
 	//Gets for member variables
+	void replaceCell(int, int, int);
+	int getCellAt(int, int);
+	void randomize(int);
 	int getSizeOfMacroBlock();
 	int getSizeOfBoard();
 	int getFitness();
